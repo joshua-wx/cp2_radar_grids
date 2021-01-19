@@ -69,7 +69,7 @@ def main(date_range: List[datetime.datetime]) -> None:
 
         for flist_chunk in chunks(flist, 15):
             with ProcessPool() as pool:
-                future = pool.map(buffer, flist_chunk, timeout=45)
+                future = pool.map(buffer, flist_chunk, timeout=300)
                 iterator = future.result()
 
                 while True:
