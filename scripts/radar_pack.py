@@ -60,14 +60,14 @@ def buffer(infile: str) -> None:
 
 def main(date_range: List[datetime.datetime]) -> None:
     for day in date_range:
-        input_dir = os.path.join(INPATH, day.strftime("%Y"), day.strftime("%Y%m%d"), "*.*")
+        input_dir = os.path.join(INPATH, day.strftime("%Y"), day.strftime("%Y%m%d"), "*.nc")
         flist = sorted(glob.glob(input_dir))
         if len(flist) == 0:
             print("No file found for {}.".format(day.strftime("%Y-%b-%d")))
             continue
         print(f"{len(flist)} files found for " + day.strftime("%Y-%b-%d"))
 
-        for flist_chunk in chunks(flist, 32):
+        for flist_chunk in chunks(flist, 15):
             with ProcessPool() as pool:
                 future = pool.map(buffer, flist_chunk, timeout=45)
                 iterator = future.result()
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     Global variables definition.
     """
     # Parse arguments
-    parser_description = "Processing of radar data from level 1a to level 1b."
+    parser_description = "Processing of radar data from level 1 to level 1b."
     parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument(
         "-s",
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         "-i",
         "--input-dir",
         dest="indir",
-        default="/g/data/hj10/cpol/cpol_level_1b/v2020/ppi/",
+        default="/scratch/kl02/jss548/cp2_level_1b/v2020/ppi",
         type=str,
         help="Input directory.",
     )
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         "-o",
         "--output-dir",
         dest="outdir",
-        default="/scratch/kl02/vhl548/cpol_level_1b/v2020/gridded",
+        default="/scratch/kl02/jss548/cp2_level_1b/v2020/",
         type=str,
         help="Output directory.",
     )

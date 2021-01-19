@@ -79,7 +79,7 @@ def update_metadata(radar) -> dict:
         "geospatial_vertical_min": radar.origin_altitude["data"][0],
         "geospatial_vertical_max": 20000,
         "geospatial_vertical_positive": "up",
-        "history": f"created by Valentin Louf on gadi.nci.org.au at {today.isoformat()} using Py-ART",
+        "history": f"created by Joshua Soderholm on gadi.nci.org.au at {today.isoformat()} using Py-ART",
         "processing_level": "b2",
         "time_coverage_start": dtime[0].isoformat(),
         "time_coverage_end": dtime[-1].isoformat(),
@@ -137,8 +137,7 @@ def grid_radar(
     grid_xlim=(-150000, 150000),
     grid_ylim=(-150000, 150000),
     grid_zlim=(0, 20000),
-    constant_roi=2500,
-    na_standard=False,
+    na_standard=True,
 ):
     """
     Map a single radar to a Cartesian grid.
@@ -160,8 +159,6 @@ def grid_radar(
         Grid limits in the y-axis.
     grid_zlim: tuple
         Grid limits in the z-axis.
-    constant_roi: float
-        Value for the size of the radius of influence.
     na_standard: bool
         Use the National Archive standard for file-naming convention.
 
@@ -182,7 +179,7 @@ def grid_radar(
         if na_standard:
             # Like the national archive: ID_YYYYMMDD_HHMMSS.nc
             datetimestr = date.strftime("%Y%m%d_%H%M")
-            outfilename = f"502_{datetimestr}00.nc"
+            outfilename = f"501_{datetimestr}00_level1b_grid150km.nc"
         else:
             datetimestr = date.strftime("%Y%m%d.%H%M")
             if "PPIVol" in infile:
@@ -213,12 +210,17 @@ def grid_radar(
         grid_limits=(grid_zlim, grid_xlim, grid_ylim),
         gridding_algo="map_gates_to_grid",
         weighting_function="Barnes2",
-        roi_func="constant",
-        constant_roi=constant_roi,
+        roi_func = 'dist_beam',
+        xy_factor = 1/60,
     )
-
+    #xy_factor =1/60 limits ROI to 2.5km at 150km range
+    
     # Removing obsolete fields
-    grid.fields.pop("ROI")
+    try:
+        grid.fields.pop("ROI")
+    except KeyError:
+        pass    
+        
     try:
         grid.fields.pop("raw_velocity")
     except KeyError:
@@ -259,7 +261,7 @@ def 标准映射(
     output_directory: str,
     prefix: str = "rvopolgrid",
     refl_name: str = "corrected_reflectivity",
-    na_standard: bool = False,
+    na_standard: bool = True,
 ):
     """
     Call the 2 gridding functions to generate a full domain grid at 2.5 km
@@ -322,31 +324,32 @@ def 标准映射(
     radar_date = cftime.num2pydate(radar.time["data"][0], radar.time["units"])
     year = str(radar_date.year)
     datestr = radar_date.strftime("%Y%m%d")
-    # 150 km 2500m resolution
-    outpath = os.path.join(output_directory, "grid_150km_2500m")
-    mkdir(outpath)
-    outpath = os.path.join(outpath, year)
-    mkdir(outpath)
-    outpath = os.path.join(outpath, datestr)
-    mkdir(outpath)
+    
+#     # 150 km 2500m resolution
+#     outpath = os.path.join(output_directory, "grid_150km_2500m")
+#     mkdir(outpath)
+#     outpath = os.path.join(outpath, year)
+#     mkdir(outpath)
+#     outpath = os.path.join(outpath, datestr)
+#     mkdir(outpath)
 
-    try:
-        grid_radar(
-            radar,
-            infile=infile,
-            outpath=outpath,
-            refl_name=refl_name,
-            prefix=prefix,
-            grid_shape=(41, 117, 117),
-            grid_xlim=(-150000, 150000),
-            grid_ylim=(-150000, 150000),
-            grid_zlim=(0, 20000),
-            constant_roi=2500,
-            na_standard=na_standard,
-        )
-    except Exception:
-        traceback.print_exc()
-        pass
+#     try:
+#         grid_radar(
+#             radar,
+#             infile=infile,
+#             outpath=outpath,
+#             refl_name=refl_name,
+#             prefix=prefix,
+#             grid_shape=(41, 117, 117),
+#             grid_xlim=(-150000, 150000),
+#             grid_ylim=(-150000, 150000),
+#             grid_zlim=(0, 20000),
+#             constant_roi=2500,
+#             na_standard=na_standard,
+#         )
+#     except Exception:
+#         traceback.print_exc()
+#         pass
 
     # 150 km 1000m resolution
     outpath = os.path.join(output_directory, "grid_150km_1000m")
@@ -367,37 +370,36 @@ def 标准映射(
             grid_xlim=(-150000, 150000),
             grid_ylim=(-150000, 150000),
             grid_zlim=(0, 20000),
-            constant_roi=2500,
             na_standard=na_standard,
         )
     except Exception:
         traceback.print_exc()
         pass
 
-    # 70 km 1000m resolution
-    outpath = os.path.join(output_directory, "grid_70km_1000m")
-    mkdir(outpath)
-    outpath = os.path.join(outpath, year)
-    mkdir(outpath)
-    outpath = os.path.join(outpath, datestr)
-    mkdir(outpath)
+#     # 70 km 1000m resolution
+#     outpath = os.path.join(output_directory, "grid_70km_1000m")
+#     mkdir(outpath)
+#     outpath = os.path.join(outpath, year)
+#     mkdir(outpath)
+#     outpath = os.path.join(outpath, datestr)
+#     mkdir(outpath)
 
-    try:
-        grid_radar(
-            radar,
-            infile=infile,
-            outpath=outpath,
-            refl_name=refl_name,
-            prefix=prefix,
-            grid_shape=(41, 141, 141),
-            grid_xlim=(-70000, 70000),
-            grid_ylim=(-70000, 70000),
-            grid_zlim=(0, 20000),
-            constant_roi=1000,
-        )
-    except Exception:
-        traceback.print_exc()
-        pass
+#     try:
+#         grid_radar(
+#             radar,
+#             infile=infile,
+#             outpath=outpath,
+#             refl_name=refl_name,
+#             prefix=prefix,
+#             grid_shape=(41, 141, 141),
+#             grid_xlim=(-70000, 70000),
+#             grid_ylim=(-70000, 70000),
+#             grid_zlim=(0, 20000),
+#             constant_roi=1000,
+#         )
+#     except Exception:
+#         traceback.print_exc()
+#         pass
 
     del radar
     return None
